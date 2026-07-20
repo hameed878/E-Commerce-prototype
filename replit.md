@@ -1,45 +1,74 @@
-# [Project name]
+# ShopWave — SaaS-Ready E-Commerce Platform
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A production-ready Laravel e-commerce platform with Stripe checkout, PDF invoicing, role-based dashboards, and full inventory management.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- `cd artifacts/shop && php artisan serve --host=0.0.0.0 --port=3000` — run the Laravel app
+- `cd artifacts/shop && php artisan migrate` — run database migrations
+- `cd artifacts/shop && php artisan db:seed` — seed demo data
+- `cd artifacts/shop && php artisan migrate:fresh --seed` — reset and re-seed DB
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- PHP 8.2 · Laravel 12
+- Database: SQLite (file: `artifacts/shop/database/database.sqlite`)
+- Auth: Custom session-based (no Breeze dependency)
+- CSS: Tailwind CSS via CDN
+- Payments: Stripe PHP SDK (`stripe/stripe-php`)
+- PDF: `barryvdh/laravel-dompdf`
+- Mail: Log driver (configurable to SMTP/Mailgun)
 
-## Where things live
+## Where Things Live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- Routes: `artifacts/shop/routes/web.php`
+- Controllers: `artifacts/shop/app/Http/Controllers/`
+- Models: `artifacts/shop/app/Models/`
+- Views: `artifacts/shop/resources/views/`
+- Migrations: `artifacts/shop/database/migrations/`
+- Seeders: `artifacts/shop/database/seeders/`
+- Invoice PDF template: `artifacts/shop/resources/views/invoices/invoice.blade.php`
+- Confirmation email: `artifacts/shop/resources/views/emails/order-confirmed.blade.php`
 
-## Architecture decisions
+## Architecture Decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- **Session cart**: Cart stored in PHP session (no DB table needed). Cleared after successful webhook confirmation.
+- **Webhook-driven fulfillment**: Stock decrement, invoice generation, and email sending all triggered by the `checkout.session.completed` Stripe webhook — not on the redirect URL.
+- **SQLite**: Used for zero-config portability. Swap to MySQL/Postgres by updating `DB_CONNECTION` env vars.
+- **Idempotent webhook**: Checks `order->isPaid()` before processing to prevent double-fulfillment.
+- **Policy gate**: `OrderPolicy` ensures customers can only view/download their own orders.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Public storefront with search + category filters
+- Stock-aware "Add to Cart" / "Out of Stock" states
+- Session cart with quantity controls, tax (10%), $5 shipping, grand total
+- Stripe Checkout integration (test mode)
+- Webhook listener at `/webhook/stripe`
+- PDF invoice auto-generation on payment confirmation
+- Order confirmation email with PDF attachment
+- Customer dashboard: order history + invoice downloads
+- Admin dashboard: revenue stats, product CRUD, order management
 
-## User preferences
+## Demo Credentials
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+| Role     | Email                     | Password   |
+|----------|---------------------------|------------|
+| Admin    | admin@shopwave.com        | password   |
+| Customer | customer@shopwave.com     | password   |
+
+## User Preferences
+
+- Build: PHP 8.2 + Laravel 12, SQLite, Tailwind CSS via CDN
+- Stripe keys must be added as Replit Secrets: `STRIPE_KEY`, `STRIPE_SECRET`, `STRIPE_WEBHOOK_SECRET`
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Stripe webhook must bypass CSRF — already configured via `withoutMiddleware` in `routes/web.php`
+- The webhook handles stock decrement and invoice generation; the `/checkout/success` redirect is display-only
+- To test Stripe webhooks locally, use the Stripe CLI: `stripe listen --forward-to localhost:3000/webhook/stripe`
+- Mail is set to `log` driver — check `artifacts/shop/storage/logs/laravel.log` to see emails
 
 ## Pointers
 
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Stripe test cards: `4242 4242 4242 4242` (success), `4000 0000 0000 0002` (decline)

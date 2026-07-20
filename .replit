@@ -1,4 +1,4 @@
-modules = ["nodejs-24"]
+modules = ["nodejs-24", "php-8.2"]
 
 [deployment]
 router = "application"
@@ -11,6 +11,27 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "ShopWave Laravel"
+
+[[workflows.workflow]]
+name = "ShopWave Laravel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/shop && php artisan serve --host=0.0.0.0 --port=3000"
+waitForPort = 3000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -18,3 +39,22 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+APP_DEBUG = "true"
+APP_ENV = "local"
+APP_KEY = "base64:cqXbqdk3G5N82Nam7SgWX2fhMnHgfB53YfjHH9H17XI="
+APP_NAME = "ShopWave"
+APP_URL = "http://localhost"
+CACHE_STORE = "file"
+DB_CONNECTION = "sqlite"
+DB_DATABASE = "/home/runner/workspace/artifacts/shop/database/database.sqlite"
+FILESYSTEM_DISK = "local"
+MAIL_FROM_ADDRESS = "noreply@shopwave.com"
+MAIL_FROM_NAME = "ShopWave"
+MAIL_MAILER = "log"
+QUEUE_CONNECTION = "sync"
+SESSION_DRIVER = "file"
+SESSION_LIFETIME = "120"
