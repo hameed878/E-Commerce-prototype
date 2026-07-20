@@ -14,11 +14,6 @@ class CheckoutController extends Controller
     const TAX_RATE = 0.10;
     const SHIPPING_FEE = 5.00;
 
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
-
     public function create(Request $request)
     {
         $cart = session('cart', []);
