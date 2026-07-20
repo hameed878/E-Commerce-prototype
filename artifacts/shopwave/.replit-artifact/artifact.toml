@@ -1,0 +1,17 @@
+kind = "web"
+previewPath = "/"
+title = "ShopWave"
+version = "1.0.0"
+id = "artifacts/shopwave"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23798
+
+[services.env]
+PORT = "23798"
+
+[services.development]
+run = "cd /home/runner/workspace/artifacts/shop && php artisan serve --host=0.0.0.0 --port=$PORT"
