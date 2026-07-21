@@ -23,7 +23,7 @@ class ShopController extends Controller
             $query->whereHas('category', fn($q) => $q->where('slug', $request->category));
         }
 
-        $products = $query->latest()->paginate(8)->withQueryString();
+        $products = $query->latest()->paginate(24)->withQueryString();
         $categories = Category::withCount('products')->get();
         $selectedCategory = $request->category;
         $search = $request->search;
