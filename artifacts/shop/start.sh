@@ -56,7 +56,10 @@ VITE_APP_NAME="\${APP_NAME}"
 EOF
 
 # ── Run migrations ──────────────────────────────────────────────────────────
-php artisan migrate --force --no-ansi
+# Use direct (non-pooler) host for DDL migrations — PgBouncer transaction mode
+# doesn't support DDL transactions. Falls back gracefully for SQLite.
+MIGRATE_HOST="${DB_HOST//-pooler./\.}"
+DB_HOST="$MIGRATE_HOST" php artisan migrate --force --no-ansi
 
 # ── Ensure storage symlink exists (needed for uploaded product images) ───────
 php artisan storage:link --force 2>/dev/null || true
@@ -65,7 +68,7 @@ php artisan storage:link --force 2>/dev/null || true
 PRODUCT_COUNT=$(php artisan tinker --execute="echo App\Models\Product::count();" 2>/dev/null | tail -1 || echo "0")
 if [ "$PRODUCT_COUNT" = "0" ]; then
     echo "No products found — seeding demo data..."
-    php artisan db:seed --force --no-ansi
+    DB_HOST="$MIGRATE_HOST" php artisan db:seed --force --no-ansi
 fi
 
 # ── Start server ────────────────────────────────────────────────────────────
