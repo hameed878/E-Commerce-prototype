@@ -4,15 +4,34 @@ A production-ready Laravel e-commerce platform with Stripe checkout, PDF invoici
 
 ## Run & Operate
 
-- `cd artifacts/shop && php artisan serve --host=0.0.0.0 --port=3000` — run the Laravel app
-- `cd artifacts/shop && php artisan migrate` — run database migrations
+- The app runs via the **`artifacts/shopwave: web`** managed workflow: `cd artifacts/shop && bash start.sh`
+- `start.sh` generates `.env` from Replit env vars, runs `php artisan migrate --force`, then starts the server
 - `cd artifacts/shop && php artisan db:seed` — seed demo data
 - `cd artifacts/shop && php artisan migrate:fresh --seed` — reset and re-seed DB
+
+## Required Secrets & Env Vars
+
+Set in Replit Secrets / Shared Env:
+
+| Key | Value | Purpose |
+|-----|-------|---------|
+| `DB_CONNECTION` | `sqlite` | Database driver |
+| `DB_DATABASE` | `/home/runner/workspace/artifacts/shop/database/database.sqlite` | SQLite file path |
+| `SESSION_DRIVER` | `file` | File-based sessions |
+| `CACHE_STORE` | `file` | File-based cache |
+| `STRIPE_KEY` | your key | Stripe publishable key (optional) |
+| `STRIPE_SECRET` | your key | Stripe secret key (optional, secret) |
+| `STRIPE_WEBHOOK_SECRET` | your key | Stripe webhook secret (optional, secret) |
+
+## Architecture Decisions (Setup)
+
+- **SQLite over Neon PostgreSQL**: Neon's network latency (~1s/request) caused health checks to fail. SQLite is zero-latency and sufficient for development. To use PostgreSQL in production, set `DB_CONNECTION=pgsql` and the `DB_*` env vars in the production environment.
+- **`start.sh` as entrypoint**: Generates `.env` from Replit env vars, runs migrations, then starts the server. Managed by the `artifacts/shopwave: web` workflow.
 
 ## Stack
 
 - PHP 8.2 · Laravel 12
-- Database: SQLite (file: `artifacts/shop/database/database.sqlite`)
+- Database: SQLite (`artifacts/shop/database/database.sqlite`) — switched from Neon PostgreSQL for zero-latency local dev
 - Auth: Custom session-based (no Breeze dependency)
 - CSS: Tailwind CSS via CDN
 - Payments: Stripe PHP SDK (`stripe/stripe-php`)

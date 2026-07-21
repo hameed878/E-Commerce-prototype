@@ -9,28 +9,6 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
-runButton = "Project"
-
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "ShopWave Laravel"
-
-[[workflows.workflow]]
-name = "ShopWave Laravel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd artifacts/shop && php artisan serve --host=0.0.0.0 --port=3000"
-waitForPort = 3000
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [agent]
 stack = "PNPM_WORKSPACE"
@@ -49,8 +27,8 @@ APP_KEY = "base64:cqXbqdk3G5N82Nam7SgWX2fhMnHgfB53YfjHH9H17XI="
 APP_NAME = "ShopWave"
 APP_URL = "http://localhost"
 CACHE_STORE = "file"
-DB_CONNECTION = "pgsql"
-DB_DATABASE = "neondb"
+DB_CONNECTION = "sqlite"
+DB_DATABASE = "/home/runner/workspace/artifacts/shop/database/database.sqlite"
 FILESYSTEM_DISK = "local"
 MAIL_FROM_ADDRESS = "noreply@shopwave.com"
 MAIL_FROM_NAME = "ShopWave"
