@@ -40,11 +40,6 @@
                 </button>
             </form>
 
-            <div class="mt-4 p-3 bg-gray-50 rounded-xl">
-                <p class="text-xs text-gray-500 font-medium mb-1">Demo accounts:</p>
-                <p class="text-xs text-gray-500">Admin: <code class="bg-gray-100 px-1 py-0.5 rounded">admin@shopwave.com</code> / <code class="bg-gray-100 px-1 py-0.5 rounded">password</code></p>
-                <p class="text-xs text-gray-500">Customer: <code class="bg-gray-100 px-1 py-0.5 rounded">customer@shopwave.com</code> / <code class="bg-gray-100 px-1 py-0.5 rounded">password</code></p>
-            </div>
 
             <p class="text-center text-sm text-gray-500 mt-6">
                 Don't have an account?
