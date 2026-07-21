@@ -14,4 +14,4 @@ localPort = 23798
 PORT = "23798"
 
 [services.development]
-run = "cd /home/runner/workspace/artifacts/shop && php artisan serve --host=0.0.0.0 --port=$PORT"
+run = "cd /home/runner/workspace/artifacts/shop && bash start.sh"
