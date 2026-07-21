@@ -36,8 +36,24 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
+    public function reviews()
+    {
+        return $this->hasMany(Review::class);
+    }
+
     public function isAdmin(): bool
     {
         return $this->is_admin === true;
+    }
+
+    /** Check if a product is in this user's wishlist */
+    public function hasWishlisted(int $productId): bool
+    {
+        return $this->wishlists()->where('product_id', $productId)->exists();
     }
 }

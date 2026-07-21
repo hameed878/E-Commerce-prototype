@@ -38,6 +38,16 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function reviews()
+    {
+        return $this->hasMany(Review::class)->latest();
+    }
+
+    public function wishlists()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
+
     public function isInStock(): bool
     {
         return $this->stock_quantity > 0;
@@ -46,5 +56,15 @@ class Product extends Model
     public function decrementStock(int $quantity): void
     {
         $this->decrement('stock_quantity', $quantity);
+    }
+
+    public function averageRating(): float
+    {
+        return round($this->reviews()->avg('rating') ?? 0, 1);
+    }
+
+    public function reviewCount(): int
+    {
+        return $this->reviews()->count();
     }
 }

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+@php $isArabic = app()->getLocale() === 'ar'; @endphp
+<html lang="{{ app()->getLocale() }}" dir="{{ $isArabic ? 'rtl' : 'ltr' }}" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,15 +8,22 @@
     <title>@yield('title', 'ShopWave') — ShopWave</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
+    @if($isArabic)
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @else
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    @endif
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: {{ $isArabic ? "'Noto Sans Arabic'" : "'Inter'" }}, sans-serif; }
         .cart-badge { animation: pop 0.2s ease-out; }
         @keyframes pop { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
         #user-dropdown { display: none; }
         #user-dropdown.open { display: block; }
         #mobile-menu { display: none; }
         #mobile-menu.open { display: block; }
+        /* RTL utility overrides for elements that need explicit flip */
+        [dir="rtl"] .float-end { float: left; }
+        [dir="ltr"] .float-end { float: right; }
     </style>
     @stack('styles')
 </head>
@@ -38,9 +46,9 @@
             <form action="{{ route('shop.index') }}" method="GET" class="hidden md:flex flex-1 max-w-lg">
                 <div class="relative w-full">
                     <input type="text" name="search" value="{{ request('search') }}"
-                        placeholder="Search products..."
-                        class="w-full pl-4 pr-10 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
-                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600">
+                        placeholder="{{ __('shop.search_placeholder') }}"
+                        class="w-full ps-4 pe-10 py-2 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    <button type="submit" class="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-indigo-600">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </button>
                 </div>
@@ -48,6 +56,18 @@
 
             {{-- Right Actions --}}
             <div class="flex items-center gap-1 sm:gap-2">
+
+                {{-- Language Switcher --}}
+                <div class="flex items-center border border-gray-200 rounded-full overflow-hidden text-xs font-semibold">
+                    <form method="POST" action="{{ route('language.switch', 'en') }}">
+                        @csrf
+                        <button type="submit" class="px-2.5 py-1.5 transition-colors {{ app()->getLocale() === 'en' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">EN</button>
+                    </form>
+                    <form method="POST" action="{{ route('language.switch', 'ar') }}">
+                        @csrf
+                        <button type="submit" class="px-2.5 py-1.5 transition-colors {{ app()->getLocale() === 'ar' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">ع</button>
+                    </form>
+                </div>
 
                 {{-- Mobile Search Button --}}
                 <button onclick="toggleMobileSearch()" class="md:hidden p-2 text-gray-600 hover:text-indigo-600 rounded-lg">
@@ -59,11 +79,24 @@
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                     @php $cartCount = array_sum(array_column(session('cart', []), 'quantity')); @endphp
                     @if($cartCount > 0)
-                    <span class="cart-badge absolute -top-1 -right-1 bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">{{ $cartCount }}</span>
+                    <span class="cart-badge absolute -top-1 -end-1 bg-indigo-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">{{ $cartCount }}</span>
                     @endif
                 </a>
 
                 @auth
+                {{-- Wishlist icon --}}
+                <a href="{{ route('wishlist.index') }}" class="p-2 text-gray-600 hover:text-red-500 transition-colors" title="{{ __('shop.my_wishlist') }}">
+                    @php $wishlistCount = auth()->user()->wishlists()->count(); @endphp
+                    <div class="relative">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                        </svg>
+                        @if($wishlistCount > 0)
+                        <span class="absolute -top-1 -end-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center font-semibold text-[10px]">{{ $wishlistCount }}</span>
+                        @endif
+                    </div>
+                </a>
+
                 {{-- Profile Dropdown --}}
                 <div class="relative" id="user-menu-container">
                     <button onclick="toggleDropdown()" class="flex items-center gap-1.5 p-1.5 rounded-lg hover:bg-gray-50 transition-colors">
@@ -74,7 +107,7 @@
                         <svg class="w-4 h-4 text-gray-400 hidden sm:block flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
 
-                    <div id="user-dropdown" class="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+                    <div id="user-dropdown" class="absolute end-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
                         {{-- User info header --}}
                         <div class="px-4 py-3 border-b border-gray-100">
                             <p class="text-sm font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</p>
@@ -84,18 +117,25 @@
                         {{-- Navigation items --}}
                         <div class="py-1">
                             <a href="{{ route('shop.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                                Home
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                {{ __('shop.home') }}
                             </a>
                             <a href="{{ route('orders.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                                My Orders
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                                {{ __('shop.my_orders') }}
                             </a>
                             <a href="{{ route('cart.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                                My Cart
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                                {{ __('shop.my_cart') }}
                                 @if($cartCount > 0)
-                                <span class="ml-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
+                                <span class="ms-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
+                                @endif
+                            </a>
+                            <a href="{{ route('wishlist.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                {{ __('shop.my_wishlist') }}
+                                @if($wishlistCount > 0)
+                                <span class="ms-auto bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $wishlistCount }}</span>
                                 @endif
                             </a>
                         </div>
@@ -103,17 +143,17 @@
                         @if(auth()->user()->isAdmin())
                         <div class="border-t border-gray-100 py-1">
                             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                                Admin Panel
-                                <span class="ml-auto bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded font-medium">Admin</span>
+                                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                {{ __('shop.admin_panel') }}
+                                <span class="ms-auto bg-indigo-100 text-indigo-600 text-xs px-1.5 py-0.5 rounded font-medium">Admin</span>
                             </a>
                             <a href="{{ route('admin.products.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                                Manage Products
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                {{ __('shop.manage_products') }}
                             </a>
                             <a href="{{ route('admin.orders.index') }}" class="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                Manage Orders
+                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                {{ __('shop.manage_orders') }}
                             </a>
                         </div>
                         @endif
@@ -122,20 +162,20 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                                    Sign Out
+                                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                                    {{ __('shop.sign_out') }}
                                 </button>
                             </form>
                         </div>
                     </div>
                 </div>
                 @else
-                    <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 px-2 py-1">Sign In</a>
-                    <a href="{{ route('register') }}" class="text-sm font-medium bg-indigo-600 text-white px-3 py-2 rounded-full hover:bg-indigo-700 transition-colors whitespace-nowrap">Sign Up</a>
+                    <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-indigo-600 px-2 py-1">{{ __('shop.sign_in') }}</a>
+                    <a href="{{ route('register') }}" class="text-sm font-medium bg-indigo-600 text-white px-3 py-2 rounded-full hover:bg-indigo-700 transition-colors whitespace-nowrap">{{ __('shop.sign_up') }}</a>
                 @endauth
 
                 {{-- Mobile Hamburger --}}
-                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-600 hover:text-indigo-600 rounded-lg ml-1">
+                <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-gray-600 hover:text-indigo-600 rounded-lg ms-1">
                     <svg id="hamburger-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     <svg id="close-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
@@ -148,10 +188,10 @@
         <form action="{{ route('shop.index') }}" method="GET" class="px-4 py-3">
             <div class="relative">
                 <input type="text" name="search" value="{{ request('search') }}"
-                    placeholder="Search products..."
-                    class="w-full pl-4 pr-10 py-2.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="{{ __('shop.search_placeholder') }}"
+                    class="w-full ps-4 pe-10 py-2.5 border border-gray-300 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     autofocus>
-                <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                <button type="submit" class="absolute end-3 top-1/2 -translate-y-1/2 text-gray-400">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </button>
             </div>
@@ -163,24 +203,31 @@
         <div class="px-4 py-3 space-y-1">
             <a href="{{ route('shop.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                Home
+                {{ __('shop.home') }}
             </a>
             <a href="{{ route('cart.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                Cart
+                {{ __('shop.my_cart') }}
                 @if($cartCount > 0)
-                <span class="ml-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
+                <span class="ms-auto bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
                 @endif
             </a>
             @auth
+            <a href="{{ route('wishlist.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                {{ __('shop.my_wishlist') }}
+                @if(isset($wishlistCount) && $wishlistCount > 0)
+                <span class="ms-auto bg-red-100 text-red-600 text-xs font-semibold px-2 py-0.5 rounded-full">{{ $wishlistCount }}</span>
+                @endif
+            </a>
             <a href="{{ route('orders.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                My Orders
+                {{ __('shop.my_orders') }}
             </a>
             @if(auth()->user()->isAdmin())
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-indigo-600 hover:bg-indigo-50">
                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                Admin Panel
+                {{ __('shop.admin_panel') }}
             </a>
             @endif
             <div class="border-t border-gray-100 pt-2 mt-2">
@@ -188,14 +235,14 @@
                     @csrf
                     <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        Sign Out
+                        {{ __('shop.sign_out') }}
                     </button>
                 </form>
             </div>
             @else
             <div class="border-t border-gray-100 pt-2 mt-2 flex gap-2">
-                <a href="{{ route('login') }}" class="flex-1 text-center text-sm font-medium text-gray-700 border border-gray-300 px-4 py-2.5 rounded-lg hover:bg-gray-50">Sign In</a>
-                <a href="{{ route('register') }}" class="flex-1 text-center text-sm font-medium bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700">Sign Up</a>
+                <a href="{{ route('login') }}" class="flex-1 text-center text-sm font-medium text-gray-700 border border-gray-300 px-4 py-2.5 rounded-lg hover:bg-gray-50">{{ __('shop.sign_in') }}</a>
+                <a href="{{ route('register') }}" class="flex-1 text-center text-sm font-medium bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700">{{ __('shop.sign_up') }}</a>
             </div>
             @endauth
         </div>
@@ -246,12 +293,9 @@
 @stack('scripts')
 
 <script>
-// Profile dropdown (click-based, works on mobile)
 function toggleDropdown() {
-    const dropdown = document.getElementById('user-dropdown');
-    dropdown.classList.toggle('open');
+    document.getElementById('user-dropdown').classList.toggle('open');
 }
-// Close dropdown when clicking outside
 document.addEventListener('click', function(e) {
     const container = document.getElementById('user-menu-container');
     const dropdown = document.getElementById('user-dropdown');
@@ -259,8 +303,6 @@ document.addEventListener('click', function(e) {
         dropdown.classList.remove('open');
     }
 });
-
-// Mobile hamburger menu
 function toggleMobileMenu() {
     const menu = document.getElementById('mobile-menu');
     const hamburger = document.getElementById('hamburger-icon');
@@ -268,21 +310,15 @@ function toggleMobileMenu() {
     menu.classList.toggle('open');
     hamburger.classList.toggle('hidden');
     close.classList.toggle('hidden');
-    // Close search if open
     document.getElementById('mobile-search-bar').classList.add('hidden');
 }
-
-// Mobile search bar
 function toggleMobileSearch() {
     const bar = document.getElementById('mobile-search-bar');
     bar.classList.toggle('hidden');
-    // Close nav menu if open
     document.getElementById('mobile-menu').classList.remove('open');
     document.getElementById('hamburger-icon').classList.remove('hidden');
     document.getElementById('close-icon').classList.add('hidden');
-    if (!bar.classList.contains('hidden')) {
-        bar.querySelector('input').focus();
-    }
+    if (!bar.classList.contains('hidden')) bar.querySelector('input').focus();
 }
 </script>
 </body>

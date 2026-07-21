@@ -4,9 +4,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
@@ -16,6 +19,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/webhook/stripe', [WebhookController::class, 'handle'])
     ->name('webhook.stripe')
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class]);
+
+// ── Language Switcher ──────────────────────────────────────────────────────
+Route::post('/language/{locale}', [LanguageController::class, 'switch'])->name('language.switch');
 
 // ── Auth Routes ────────────────────────────────────────────────────────────
 Route::middleware('guest')->group(function () {
@@ -52,6 +58,18 @@ Route::prefix('orders')->name('orders.')->middleware('auth')->group(function () 
     Route::get('/', [OrderController::class, 'index'])->name('index');
     Route::get('/{order}', [OrderController::class, 'show'])->name('show');
     Route::get('/{order}/invoice', [OrderController::class, 'downloadInvoice'])->name('invoice');
+});
+
+// ── Wishlist (auth required) ───────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::get('/wishlist', [WishlistController::class, 'index'])->name('wishlist.index');
+    Route::post('/wishlist/toggle/{product}', [WishlistController::class, 'toggle'])->name('wishlist.toggle');
+});
+
+// ── Reviews (auth required) ────────────────────────────────────────────────
+Route::middleware('auth')->group(function () {
+    Route::post('/products/{product:slug}/reviews', [ReviewController::class, 'store'])->name('reviews.store');
+    Route::delete('/reviews/{review}', [ReviewController::class, 'destroy'])->name('reviews.destroy');
 });
 
 // ── Admin Dashboard ────────────────────────────────────────────────────────
