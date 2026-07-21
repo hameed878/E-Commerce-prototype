@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "php-8.2"]
+modules = ["nodejs-20", "php-8.2", "web"]
 
 [deployment]
 router = "application"
@@ -58,3 +58,6 @@ MAIL_MAILER = "log"
 QUEUE_CONNECTION = "sync"
 SESSION_DRIVER = "file"
 SESSION_LIFETIME = "120"
+
+[nix]
+channel = "stable-25_05"
