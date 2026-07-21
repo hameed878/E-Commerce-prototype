@@ -58,5 +58,12 @@ EOF
 # ── Run migrations ──────────────────────────────────────────────────────────
 php artisan migrate --force --no-ansi
 
+# ── Seed demo data if the products table is empty ───────────────────────────
+PRODUCT_COUNT=$(php artisan tinker --execute="echo App\Models\Product::count();" 2>/dev/null | tail -1 || echo "0")
+if [ "$PRODUCT_COUNT" = "0" ]; then
+    echo "No products found — seeding demo data..."
+    php artisan db:seed --force --no-ansi
+fi
+
 # ── Start server ────────────────────────────────────────────────────────────
 php artisan serve --host=0.0.0.0 --port="${PORT:-3000}"
