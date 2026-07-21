@@ -7,7 +7,7 @@ cd "$(dirname "$0")"
 cat > .env <<EOF
 APP_NAME=${SHOP_APP_NAME:-ShopWave}
 APP_ENV=${SHOP_APP_ENV:-local}
-APP_KEY=
+APP_KEY=${APP_KEY}
 APP_DEBUG=${SHOP_APP_DEBUG:-true}
 APP_URL=http://localhost
 
@@ -32,17 +32,17 @@ DB_USERNAME=${DB_USERNAME}
 DB_PASSWORD=${DB_PASSWORD}
 DB_SSLMODE=${DB_SSLMODE:-require}
 
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
+SESSION_DRIVER=${SESSION_DRIVER:-file}
+SESSION_LIFETIME=${SESSION_LIFETIME:-120}
 SESSION_ENCRYPT=false
 SESSION_PATH=/
 SESSION_DOMAIN=null
 
 BROADCAST_CONNECTION=log
 FILESYSTEM_DISK=local
-QUEUE_CONNECTION=database
+QUEUE_CONNECTION=${QUEUE_CONNECTION:-sync}
 
-CACHE_STORE=database
+CACHE_STORE=${CACHE_STORE:-file}
 
 MAIL_MAILER=log
 MAIL_FROM_ADDRESS="hello@shopwave.com"
@@ -54,9 +54,6 @@ STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
 
 VITE_APP_NAME="\${APP_NAME}"
 EOF
-
-# ── Generate app key if missing ─────────────────────────────────────────────
-php artisan key:generate --force --no-ansi
 
 # ── Run migrations ──────────────────────────────────────────────────────────
 php artisan migrate --force --no-ansi
