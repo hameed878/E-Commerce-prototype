@@ -54,6 +54,15 @@ class CheckoutController extends Controller
             ]);
         }
 
+        // Guard: Stripe not configured → show friendly demo notice
+        if (empty(config('services.stripe.secret'))) {
+            $order->update(['status' => 'failed']);
+            return redirect()->route('cart.index')->with(
+                'error',
+                '🛒 Stripe is not configured. This is a demo — add your STRIPE_SECRET to Replit Secrets to enable real payments.'
+            );
+        }
+
         // Build Stripe line items
         Stripe::setApiKey(config('services.stripe.secret'));
 
