@@ -28,7 +28,10 @@ class LanguageController extends Controller
         if (array_key_exists($locale, self::SUPPORTED)) {
             session(['locale' => $locale]);
         }
-        return redirect()->back()->withHeaders([
+        // Use url()->previous() with a safe fallback so we never redirect to
+        // a page that no longer exists (e.g. a deleted product).
+        $fallback = route('shop.index');
+        return redirect(url()->previous($fallback))->withHeaders([
             'Cache-Control' => 'no-store',
         ]);
     }
