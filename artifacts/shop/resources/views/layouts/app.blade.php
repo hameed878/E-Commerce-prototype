@@ -57,16 +57,40 @@
             {{-- Right Actions --}}
             <div class="flex items-center gap-1 sm:gap-2">
 
-                {{-- Language Switcher --}}
-                <div class="flex items-center border border-gray-200 rounded-full overflow-hidden text-xs font-semibold">
-                    <form method="POST" action="{{ route('language.switch', 'en') }}">
-                        @csrf
-                        <button type="submit" class="px-2.5 py-1.5 transition-colors {{ app()->getLocale() === 'en' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">EN</button>
-                    </form>
-                    <form method="POST" action="{{ route('language.switch', 'ar') }}">
-                        @csrf
-                        <button type="submit" class="px-2.5 py-1.5 transition-colors {{ app()->getLocale() === 'ar' ? 'bg-indigo-600 text-white' : 'text-gray-500 hover:bg-gray-50' }}">ع</button>
-                    </form>
+                {{-- Language Switcher Dropdown --}}
+                @php
+                    $supported  = \App\Http\Controllers\LanguageController::SUPPORTED;
+                    $currentLocale = app()->getLocale();
+                    $current    = $supported[$currentLocale] ?? $supported['en'];
+                @endphp
+                <div class="relative" id="lang-menu-container">
+                    <button onclick="toggleLangDropdown()"
+                            class="flex items-center gap-1.5 px-2.5 py-1.5 border border-gray-200 rounded-full text-xs font-semibold text-gray-700 hover:border-indigo-300 hover:bg-indigo-50 transition-colors focus:outline-none"
+                            aria-label="Select language">
+                        <span class="text-base leading-none">{{ $current['flag'] }}</span>
+                        <span class="hidden sm:inline">{{ strtoupper($currentLocale) }}</span>
+                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+
+                    <div id="lang-dropdown"
+                         class="hidden absolute end-0 mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 max-h-72 overflow-y-auto">
+                        @foreach($supported as $code => $lang)
+                        <form method="POST" action="{{ route('language.switch', $code) }}">
+                            @csrf
+                            <button type="submit"
+                                    class="w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors
+                                           {{ $currentLocale === $code
+                                               ? 'bg-indigo-50 text-indigo-700 font-semibold'
+                                               : 'text-gray-700 hover:bg-gray-50' }}">
+                                <span class="text-base leading-none flex-shrink-0">{{ $lang['flag'] }}</span>
+                                <span class="truncate">{{ $lang['name'] }}</span>
+                                @if($currentLocale === $code)
+                                <svg class="w-3.5 h-3.5 ms-auto flex-shrink-0 text-indigo-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                @endif
+                            </button>
+                        </form>
+                        @endforeach
+                    </div>
                 </div>
 
                 {{-- Mobile Search Button --}}
@@ -295,12 +319,26 @@
 <script>
 function toggleDropdown() {
     document.getElementById('user-dropdown').classList.toggle('open');
+    document.getElementById('lang-dropdown').classList.add('hidden');
+}
+function toggleLangDropdown() {
+    const dd = document.getElementById('lang-dropdown');
+    dd.classList.toggle('hidden');
+    // Close user dropdown if open
+    const ud = document.getElementById('user-dropdown');
+    if (ud) ud.classList.remove('open');
 }
 document.addEventListener('click', function(e) {
-    const container = document.getElementById('user-menu-container');
-    const dropdown = document.getElementById('user-dropdown');
-    if (container && !container.contains(e.target)) {
-        dropdown.classList.remove('open');
+    const userContainer = document.getElementById('user-menu-container');
+    const userDropdown  = document.getElementById('user-dropdown');
+    if (userContainer && !userContainer.contains(e.target)) {
+        if (userDropdown) userDropdown.classList.remove('open');
+    }
+    const langContainer = document.getElementById('lang-menu-container');
+    const langDropdown  = document.getElementById('lang-dropdown');
+    if (langContainer && !langContainer.contains(e.target)) {
+        if (langDropdown) langDropdown.classList.remove('hidden');
+        if (langDropdown) langDropdown.classList.add('hidden');
     }
 });
 function toggleMobileMenu() {
