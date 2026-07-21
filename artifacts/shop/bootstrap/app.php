@@ -11,6 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Trust Replit's reverse proxy so Laravel generates https:// URLs
+        // and browsers don't show "form not secure" warnings
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
