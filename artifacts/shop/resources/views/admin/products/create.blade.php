@@ -9,7 +9,7 @@
     </a>
 
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-        <form method="POST" action="{{ route('admin.products.store') }}" class="space-y-6">
+        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @include('admin.products._form')
             <div class="flex gap-3 pt-2">

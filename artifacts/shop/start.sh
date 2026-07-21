@@ -58,6 +58,9 @@ EOF
 # ── Run migrations ──────────────────────────────────────────────────────────
 php artisan migrate --force --no-ansi
 
+# ── Ensure storage symlink exists (needed for uploaded product images) ───────
+php artisan storage:link --force 2>/dev/null || true
+
 # ── Seed demo data if the products table is empty ───────────────────────────
 PRODUCT_COUNT=$(php artisan tinker --execute="echo App\Models\Product::count();" 2>/dev/null | tail -1 || echo "0")
 if [ "$PRODUCT_COUNT" = "0" ]; then
